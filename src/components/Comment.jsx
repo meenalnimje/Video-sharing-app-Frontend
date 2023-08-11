@@ -1,6 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
-
+import { getUserInfo, setLoading } from "../redux/slice/userSlice";
+import DeleteIcon from '@mui/icons-material/Delete';
+import {format} from "timeago.js"
+import { axiosClient } from "../utils/axiosClient";
 const Container = styled.div`
   display: flex;
   gap: 10px;
@@ -11,12 +15,13 @@ const Avatar = styled.img`
   width: 50px;
   height: 50px;
   border-radius: 50%;
-`;
-
-const Details = styled.div`
+  `;
+  
+  const Details = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex:1;
   color: ${({ theme }) => theme.text}
 `;
 const Name = styled.span`
@@ -34,22 +39,54 @@ const Date = styled.span`
 const Text = styled.span`
   font-size: 14px;
 `;
+const Button=styled.button`
+  display:flex;
+  background-color: transparent;
+  border:none;
+  color: red;
+  cursor: pointer;
+  height:25px;
+  // width:30px;
+  // display: flex;
+  // justify-content:center;
+  // align-items: center;
 
-const Comment = () => {
+`
+const Comment = (props) => {
+  console.log("props of commnet",props);
+  const dispatch=useDispatch();
+  const id=props?.info?.userId;
+  const userInfo=useSelector(state=>state.userReducer.userInfo);
+  const myProfile=useSelector(state=>state.userReducer.myProfile)
+  const currVideo=useSelector(state=>state.videoReducer.currVideo);
+  useEffect(()=>{
+    dispatch(getUserInfo({id}))
+  },[id])
+  async function handleDeleteComment(){
+    try {
+      dispatch(setLoading(true));
+      const response=await axiosClient.delete(`/comment/${props?.info?._id}`);
+      console.log("response of delete",response);
+    } catch (e) {
+      console.log("error from delete commnet side",e);
+    }
+    finally{
+      dispatch(setLoading(false));
+      window.location.reload(true);
+    }
+  }
   return (
     <Container>
-      <Avatar src="https://yt3.ggpht.com/yti/APfAmoE-Q0ZLJ4vk3vqmV4Kwp0sbrjxLyB8Q4ZgNsiRH=s88-c-k-c0x00ffffff-no-rj-mo" />
+      <Avatar src={userInfo?.image} />
       <Details>
         <Name>
-          John Doe <Date>1 day ago</Date>
+          {userInfo.name}  <Date>{format(props?.info?.createdAt)}</Date>
         </Name>
         <Text>
-          Lorem ipsum dolor, sit amet consectetur adipisicing elit. Vel, ex
-          laboriosam ipsam aliquam voluptatem perferendis provident modi, sequi
-          tempore reiciendis quod, optio ullam cumque? Quidem numquam sint
-          mollitia totam reiciendis?
+          {props?.info?.desc}
         </Text>
       </Details>
+      {(props.info.userId===myProfile._id) && <Button onClick={handleDeleteComment}>Remove</Button>}
     </Container>
   );
 };

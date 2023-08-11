@@ -1,7 +1,8 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-
+import {format} from "timeago.js"
+import { axiosClient } from "../utils/axiosClient";
 const Container = styled.div`
   width: ${(props) => props.type !== "sm" && "360px"};
   margin-bottom: ${(props) => (props.type === "sm" ? "10px" : "45px")};
@@ -51,23 +52,34 @@ const Info = styled.div`
   color: ${({ theme }) => theme.textSoft};
 `;
 
-const Card = ({ type }) => {
+const Card = ({item}) => {
+  console.log("item",item);
+  const [channel,setChannel]=useState({});
+  async function getChannelInfo(){
+    const response=await axiosClient.post(`/user/find/userinfo`,{id:item.userId});
+    // console.log(`response of channel `,response.result);
+    // console.log("result ",response.result);
+    setChannel(response.result.user);
+  }
+  useEffect(()=>{
+    getChannelInfo();
+  },[item.userId])
   return (
-    <Link to="/video/test" style={{ textDecoration: "none" }}>
-      <Container type={type}>
+    <Link to={`/video/${item._id}`} style={{ textDecoration: "none" }}>
+      <Container type={item.type}>
         <Image
-          type={type}
-          src="https://i9.ytimg.com/vi_webp/k3Vfj-e1Ma4/mqdefault.webp?v=6277c159&sqp=CIjm8JUG&rs=AOn4CLDeKmf_vlMC1q9RBEZu-XQApzm6sA"
+          type={item.type}
+          src={item.imgUrl}
         />
-        <Details type={type}>
+        <Details type={item.type}>
           <ChannelImage
-            type={type}
-            src="https://yt3.ggpht.com/yti/APfAmoE-Q0ZLJ4vk3vqmV4Kwp0sbrjxLyB8Q4ZgNsiRH=s88-c-k-c0x00ffffff-no-rj-mo"
+            type={item.type}
+            src={channel.image}
           />
           <Texts>
-            <Title>Test Video</Title>
-            <ChannelName>Lama Dev</ChannelName>
-            <Info>660,908 views • 1 day ago</Info>
+            <Title>{item.title}</Title>
+            <ChannelName>{channel.name}</ChannelName>
+            <Info>{item.views} • {format(item.createdAt)}</Info>
           </Texts>
         </Details>
       </Container>
